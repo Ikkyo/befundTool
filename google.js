@@ -4,7 +4,7 @@ import { createReport } from "docx-templates";
 import { readFileSync } from "fs";
 
 const credentials = JSON.parse(readFileSync("./credentials.json", "utf8"));
-const template = fs.readFileSync("Vorlage_Ergebnisse.docx");
+const template = fs.readFileSync("josi.docx");
 
 const spreadsheetId = "1Jv9JvuZbE85kw25jQriFkXMee1uExBPf-oDobmwAJbA";
 
@@ -101,10 +101,20 @@ const transformedTable = table.reduce((acc, { name, value }) => {
 
 // // create report
 
-const buffer = await createReport({
-  template,
-  data: transformedTable,
-  cmdDelimiter: ["{{", "}}"],
-});
-
-fs.writeFileSync("report.docx", buffer);
+try {
+  const buffer = await createReport({
+    template,
+    data: transformedTable,
+    cmdDelimiter: ["{{", "}}"],
+    failFast: false,
+  });
+  fs.writeFileSync(`${code}_report.docx`, buffer);
+} catch (errors) {
+  if (Array.isArray(errors)) {
+    // An array of errors likely caused by bad commands in the template.
+    console.log(errors);
+  } else {
+    // Not an array of template errors, indicating something more serious.
+    throw errors;
+  }
+}
