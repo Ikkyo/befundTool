@@ -26,7 +26,6 @@ import {
   Person,
   Settings,
   Description,
-  Assessment,
 } from "@mui/icons-material";
 
 // Styled components
@@ -134,20 +133,23 @@ const Dashboard: React.FC = () => {
     setMessage(null);
 
     try {
-      // API call to backend
-      const response = await fetch("/api/generate-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          code: code.trim(),
-          reportType: reportType,
-        }),
-      });
+      // API call to backend using GET request with query parameter
+      const response = await fetch(
+        `/api/report?code=${encodeURIComponent(code.trim())}`,
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error("Failed to generate report");
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || "Failed to generate report");
       }
 
       // Handle file download
@@ -155,7 +157,7 @@ const Dashboard: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${reportType}-report-${code}.docx`;
+      link.download = `${code}_report.docx`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -163,13 +165,22 @@ const Dashboard: React.FC = () => {
 
       setMessage({
         type: "success",
-        text: `${reportType} report generated successfully!`,
+        text: `Report for code "${code}" generated successfully!`,
       });
+
+      // Reset the form after successful download
+      setTimeout(() => {
+        setCode("");
+        setMessage(null);
+      }, 2000); // Clear after 2 seconds to let user see the success message
     } catch (error) {
       console.error("Error generating report:", error);
       setMessage({
         type: "error",
-        text: "Failed to generate report. Please try again.",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to generate report. Please try again.",
       });
     } finally {
       setIsGenerating(null);
@@ -281,47 +292,21 @@ const Dashboard: React.FC = () => {
             )}
 
             {/* Buttons */}
-            <Box
-              display="flex"
-              gap={2}
-              flexDirection={{ xs: "column", sm: "row" }}
-              justifyContent="center"
-              width="100%"
-            >
+            <Box display="flex" justifyContent="center" width="100%">
               <StyledButton
                 variant="contained"
                 startIcon={
-                  isGenerating === "Standard" ? (
+                  isGenerating ? (
                     <CircularProgress size={20} color="inherit" />
                   ) : (
                     <Description />
                   )
                 }
-                onClick={() => generateReport("Standard")}
+                onClick={() => generateReport("Report")}
                 disabled={isGenerating !== null}
-                sx={{ flex: { sm: 1 }, width: { xs: "100%" } }}
+                sx={{ minWidth: 200 }}
               >
-                {isGenerating === "Standard"
-                  ? "Generating..."
-                  : "Generate Standard Report"}
-              </StyledButton>
-
-              <StyledButton
-                variant="outlined"
-                startIcon={
-                  isGenerating === "Detailed" ? (
-                    <CircularProgress size={20} color="inherit" />
-                  ) : (
-                    <Assessment />
-                  )
-                }
-                onClick={() => generateReport("Detailed")}
-                disabled={isGenerating !== null}
-                sx={{ flex: { sm: 1 }, width: { xs: "100%" } }}
-              >
-                {isGenerating === "Detailed"
-                  ? "Generating..."
-                  : "Generate Detailed Report"}
+                {isGenerating ? "Generating Report..." : "Generate Report"}
               </StyledButton>
             </Box>
 

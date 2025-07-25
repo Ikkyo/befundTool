@@ -144,10 +144,25 @@ const LoginPage: React.FC = () => {
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // For demo purposes, accept any email/password combination
-      console.log("Login attempt:", formData);
+      // Check against hardcoded credentials
+      const validCredentials = {
+        email: "admin@befundtool.com",
+        password: "password123",
+      };
 
-      // Navigate to dashboard or home page after successful login
+      if (
+        formData.email !== validCredentials.email ||
+        formData.password !== validCredentials.password
+      ) {
+        throw new Error("Invalid email or password");
+      }
+
+      console.log("Login successful:", formData.email);
+
+      // Store auth token for authenticated state
+      localStorage.setItem("authToken", "authenticated");
+
+      // Navigate to dashboard after successful login
       navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
