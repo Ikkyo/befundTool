@@ -6,10 +6,10 @@ import { readFileSync } from "fs";
 const credentials = JSON.parse(readFileSync("./credentials.json", "utf8"));
 const template = fs.readFileSync("josi.docx");
 
-const spreadsheetId = "1Jv9JvuZbE85kw25jQriFkXMee1uExBPf-oDobmwAJbA";
+const spreadsheetId = process.env.GOOGLE_DOC_SHEET_ID || "";
 
 const auth = new google.auth.GoogleAuth({
-  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  scopes: [process.env.GOOGLE_API_SERVICE],
   credentials: credentials,
 });
 
